@@ -1,0 +1,364 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>KL &amp; Melaka Trip Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: field-map on the left (sticky on wide screens), a tabbed day planner on the right; stacks on phones. */
+:root{
+  --bg:#f3f6f4; --surface:#ffffff; --ink:#132b27; --muted:#55706a; --line:#d4e0dc;
+  --accent:#c22a45; --food:#d99211; --water:#d9ebee; --land:#e8efe9; --warn-bg:#fff2d6; --warn-ink:#7a4b00;
+  --d1:#c22a45; --d2:#1f7a68; --d3:#2f5fbf; --d4:#8a4fbf; --d5:#6b7a75;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1917; --surface:#16231f; --ink:#e4efeb; --muted:#94aca5; --line:#2a3b36;
+  --accent:#ff6b82; --food:#f2b33d; --water:#16303a; --land:#1a2925; --warn-bg:#3a2c0e; --warn-ink:#ffd78a;
+  --d1:#ff6b82; --d2:#45c2a6; --d3:#7aa2ff; --d4:#c49af0; --d5:#a2b3ae; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1917; --surface:#16231f; --ink:#e4efeb; --muted:#94aca5; --line:#2a3b36;
+  --accent:#ff6b82; --food:#f2b33d; --water:#16303a; --land:#1a2925; --warn-bg:#3a2c0e; --warn-ink:#ffd78a;
+  --d1:#ff6b82; --d2:#45c2a6; --d3:#7aa2ff; --d4:#c49af0; --d5:#a2b3ae; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4vw,2.6rem);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:.35rem 0 0;color:var(--muted);max-width:65ch}
+.days{display:flex;flex-wrap:wrap;gap:8px}
+.days button,.seg button{font:inherit;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.days button .dot{width:10px;height:10px;border-radius:50%;background:var(--c,var(--muted))}
+.days button[aria-pressed="true"],.seg button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.mapcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:900px){.mapcard{position:static}}
+.maptools{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:4px 12px;font-size:.85rem}
+.chk{display:flex;gap:12px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.chk label{display:flex;gap:6px;align-items:center;cursor:pointer}
+svg#map{width:100%;height:auto;display:block;border-radius:10px;background:var(--water);touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:50%;display:inline-block}
+.sq{width:11px;height:11px;transform:rotate(45deg);display:inline-block;background:var(--food)}
+.info{border-top:1px solid var(--line);padding-top:10px;min-height:92px}
+.info h3{font-family:var(--display);margin:0 0 2px;font-size:1.15rem}
+.info .meta{font-size:.85rem;color:var(--muted)}
+.info p{margin:.35rem 0}
+.info a{color:var(--accent);font-weight:700}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{font:inherit;font-weight:700;background:none;border:0;border-bottom:3px solid transparent;padding:8px 10px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.daytitle{font-family:var(--display);font-weight:700;font-size:1.25rem;margin:4px 0 0}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.tl time{font-family:var(--mono);font-size:.82rem;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
+.tl .t{font-weight:700}
+.tl .s{font-size:.86rem;color:var(--muted)}
+.tl button.lnk{all:unset;cursor:pointer;font-weight:700;border-bottom:1.5px solid var(--line)}
+.tl button.lnk:hover{border-color:var(--accent)}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border-radius:8px;padding:8px 10px;font-size:.86rem}
+.warn b{display:block}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters select{font:inherit;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.food{display:flex;flex-direction:column;gap:10px}
+.fi{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.fi .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.fi h4{margin:0;font-size:1rem}
+.fi .price{font-family:var(--mono);font-size:.8rem;color:var(--muted);white-space:nowrap}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:.72rem;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--muted)}
+.tag.star{border-color:var(--accent);color:var(--accent)}
+.tag.bib{border-color:var(--food);color:var(--food)}
+.fi p{margin:0;font-size:.88rem}
+.fi .row{display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem}
+.fi .row a,.fi .row button{color:var(--accent);font-weight:700;background:none;border:0;padding:0;font:inherit;cursor:pointer;text-decoration:underline}
+.count{font-size:.85rem;color:var(--muted)}
+.bud{display:flex;flex-direction:column;gap:12px}
+.bud label{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.bud .opt{display:flex;flex-direction:column;gap:4px;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.bud .hint{font-size:.8rem;color:var(--muted)}
+.total{font-family:var(--display);font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums}
+.bars{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line)}
+.bars div{height:100%}
+.bkey{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted)}
+.bkey span{display:flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.cl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cl label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.cl input{margin-top:4px;accent-color:var(--accent)}
+.cl .done{text-decoration:line-through;color:var(--muted)}
+footer{font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Kuala Lumpur &amp; Melaka, 4 to 8 November</h1>
+    <p>Every stop and food spot from the itinerary on one map. Pick a day, tap a pin or a name for details, and use the tabs for the schedule, places to eat, a budget calculator and a booking checklist. Prices in RM per person.</p>
+  </header>
+
+  <nav class="days" id="days" aria-label="Choose a day"></nav>
+
+  <div class="grid">
+    <section class="mapcard" aria-label="Map">
+      <div class="maptools">
+        <div class="seg" id="views" role="group" aria-label="Map area">
+          <button data-v="city" aria-pressed="true">KL city</button>
+          <button data-v="region" aria-pressed="false">Region</button>
+          <button data-v="melaka" aria-pressed="false">Melaka</button>
+        </div>
+        <div class="chk">
+          <label><input type="checkbox" id="showSights" checked> Sights</label>
+          <label><input type="checkbox" id="showFood" checked> Food</label>
+          <label><input type="checkbox" id="showRoute" checked> Route</label>
+        </div>
+      </div>
+      <svg id="map" viewBox="0 0 800 560" role="img" aria-label="Map of trip stops"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="info" id="info" aria-live="polite"><p class="meta">Tap a pin or a place name to see details and open it in Google Maps.</p></div>
+    </section>
+
+    <section class="panel" aria-label="Planner">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="plan" id="tab-plan">Schedule</button>
+        <button role="tab" aria-selected="false" data-tab="eat" id="tab-eat">Where to eat</button>
+        <button role="tab" aria-selected="false" data-tab="budget" id="tab-budget">Budget</button>
+        <button role="tab" aria-selected="false" data-tab="check" id="tab-check">Checklist</button>
+      </div>
+      <div id="pane-plan" role="tabpanel"></div>
+      <div id="pane-eat" role="tabpanel" hidden>
+        <div class="filters">
+          <select id="fMeal" aria-label="Meal"><option value="">Any meal</option><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option><option>Late night</option></select>
+          <select id="fType" aria-label="Type"><option value="">Any type</option><option value="star">Michelin star</option><option value="bib">Bib Gourmand</option><option value="street">Street food / hawker</option><option value="veg">Vegetarian-friendly</option><option value="nopork">No pork listed</option></select>
+          <select id="fPrice" aria-label="Price"><option value="">Any price</option><option value="1">Under RM20</option><option value="2">RM20 to 60</option><option value="3">RM60+</option></select>
+        </div>
+        <p class="count" id="fCount"></p>
+        <div class="food" id="foodList"></div>
+      </div>
+      <div id="pane-budget" role="tabpanel" hidden></div>
+      <div id="pane-check" role="tabpanel" hidden></div>
+    </section>
+  </div>
+  <footer>Distances are straight-line estimates scaled for roads. Prices checked in early October 2026; RM amounts marked est. are estimates. Opening hours change around Deepavali (Sun 8 Nov), so check the day before. Map is a schematic drawn from coordinates, not a street map: use the Google Maps links for directions.</footer>
+</div>
+
+<script>
+const DAYS=[
+ {id:1,short:"Wed 4",title:"Wednesday 4 November",theme:"Batu Caves, Chinatown and The Weeknd",color:"--d1",view:"city"},
+ {id:2,short:"Thu 5",title:"Thursday 5 November",theme:"Art and fireflies",color:"--d2",view:"region"},
+ {id:3,short:"Fri 6",title:"Friday 6 November",theme:"Sunway Lagoon, Thean Hou, KLCC at night",color:"--d3",view:"city"},
+ {id:4,short:"Sat 7",title:"Saturday 7 November",theme:"Melaka day trip",color:"--d4",view:"melaka"},
+ {id:5,short:"Sun 8",title:"Sunday 8 November",theme:"Deepavali morning and departure",color:"--d5",view:"city"}
+];
+// Sights in schedule order (from the itinerary doc)
+const P={
+ hotel:{n:"Hotel (Bukit Bintang)",lat:3.1466,lon:101.7110,d:"Your base. MRT Bukit Bintang and the Monorail are a short walk."},
+ klia:{n:"KLIA airport",lat:2.7456,lon:101.7072,d:"KLIA Ekspres to KL Sentral, 28 min, RM55 (10% off online)."},
+ batu:{n:"Batu Caves",lat:3.2379,lon:101.6840,d:"272 steps to Temple Cave (free). Ramayana Cave RM5, Cave Villa RM15. Cover shoulders and knees."},
+ china:{n:"Chinatown, Petaling Street",lat:3.1434,lon:101.6977,d:"Late lunch. Several Bib Gourmand stalls within two streets."},
+ eco:{n:"KL Forest Eco Park",lat:3.1515,lon:101.7040,d:"Canopy walk. RM40 for foreigners, cash only. 8 am to 4:30 pm, closed Fridays."},
+ dewakan:{n:"Dewakan (2 Michelin stars)",lat:3.1585,lon:101.7183,d:"Level 48, Naza Tower, Platinum Park. Tasting menu RM870 nett, opens 6 pm, about 2.5 hours."},
+ stadium:{n:"TM Stadium Nasional, Bukit Jalil",lat:3.0548,lon:101.6915,d:"The Weeknd, After Hours Til Dawn. LRT Sri Petaling Line to Bukit Jalil station, a 4-minute walk. After the show, walk about 30 minutes away before booking a Grab."},
+ art:{n:"National Art Gallery",lat:3.1726,lon:101.7065,d:"Balai Seni Negara, Jalan Temerloh. Free entry. Allow 1.5 to 2 hours."},
+ lama:{n:"Lama (Bib Gourmand)",lat:3.1985,lon:101.7175,d:"Peranakan, 257 Jalan Ayer Jerneh, Taman Ayer Panas. Lunch 11:30 to 2:30, dinner 5:30 to 10, closed Mondays. Book via letsumai.com or +60 19-689 3969."},
+ melawati:{n:"Bukit Melawati",lat:3.3423,lon:101.2457,d:"Old fort, lighthouse, silvered leaf monkeys, sunset view. Free."},
+ kuantan:{n:"Kampung Kuantan fireflies",lat:3.3610,lon:101.3060,d:"Rowed sampan, RM100 per boat for non-Malaysians (up to 4 people). Best a little after 8 pm."},
+ sunway:{n:"Sunway Lagoon",lat:3.0697,lon:101.6070,d:"Six parks. About RM268 at the gate for international adults; cheaper online. Closed Tuesdays."},
+ theanhou:{n:"Thean Hou Temple",lat:3.1217,lon:101.6874,d:"Six-tier temple on Robson Hill, lanterns lit after dark. Free. Use Grab, the hill is steep."},
+ beta:{n:"Beta (1 Michelin star)",lat:3.1555,lon:101.7125,d:"Jalan Perak. Tour of Malaysia tasting menu RM630 plus service charge and tax. Closed Mondays."},
+ klcc:{n:"KLCC Park and Petronas Towers",lat:3.1579,lon:101.7123,d:"Lake Symphony light and sound shows at 8, 9 and 10 pm. Free."},
+ saloma:{n:"Saloma Link",lat:3.1607,lon:101.7066,d:"Lit pedestrian bridge to Kampung Baru. Free."},
+ tbs:{n:"TBS bus terminal",lat:3.0760,lon:101.7110,d:"Buses to Melaka Sentral, about 2 h 15 min, RM12 to 23."},
+ msentral:{n:"Melaka Sentral",lat:2.2187,lon:102.2234,d:"Melaka bus terminal. Grab to the old town, about 5 km."},
+ pohsan:{n:"Sam Poh Temple (Poh San Teng)",lat:2.1960,lon:102.2554,d:"Built 1795 at the foot of Bukit China, with the Hang Li Poh well. Free."},
+ heritage:{n:"Red Square and St Paul's Hill",lat:2.1940,lon:102.2490,d:"Stadthuys, Christ Church, A Famosa. Optional river cruise."},
+ jonker:{n:"Jonker Street night market",lat:2.1952,lon:102.2475,d:"Fridays to Sundays, about 6 pm to late. Snacks from RM3."}
+};
+const SCHED={
+ 1:[["07:00","KLIA to KL Sentral","klia","KLIA Ekspres RM55, or Skybus RM13 (75 min)"],["09:15","Leave hotel","hotel","MRT then KTM Komuter to Batu Caves, KTM RM2.60"],["10:00","Batu Caves","batu","Breakfast first at Chetty Nadu, steps away"],["13:00","Chinatown, Petaling Street","china","Late lunch, see Where to eat"],["14:30","KL Forest Eco Park","eco","Walk, 1.5 km"],["16:30","Hotel, check in and rest","hotel",""],["18:00","Dinner at Dewakan","dewakan","Grab, 2.0 km"],["20:00","The Weeknd concert","stadium","Bukit Jalil, LRT Sri Petaling Line"],["22:30","Back to hotel","hotel","Supper on Jalan Alor is open until 4 am"]],
+ 2:[["10:30","National Art Gallery","art","Nasi Lemak Wanjo for breakfast on the way"],["12:30","Lunch at Lama","lama","Grab, 3.2 km"],["14:00","Hotel, rest","hotel",""],["15:30","Leave for Kuala Selangor","hotel","Shared tour from about RM90 to 95, or Grab"],["17:00","Bukit Melawati","melawati","Sunset"],["18:30","Riverside seafood dinner","kuantan","RM40 to 80 (est.)"],["20:00","Fireflies","kuantan",""],["22:30","Back at hotel","hotel","66 km"]],
+ 3:[["09:00","Leave hotel","hotel","Breakfast in Brickfields on the way, next to KL Sentral"],["10:00","Sunway Lagoon","sunway","Until 17:30"],["18:00","Thean Hou Temple","theanhou","Grab, 13.8 km"],["19:30","Dinner at Beta","beta",""],["21:00","KLCC Park and Petronas Towers","klcc","Last show 10 pm"],["21:45","Saloma Link","saloma","Kampung Baru stalls across the bridge"],["22:30","Back to hotel","hotel",""]],
+ 4:[["07:15","Hotel to TBS","tbs",""],["08:00","Bus to Melaka Sentral","msentral","About 2 h 15 min"],["10:30","Sam Poh Temple","pohsan","Grab, 5.7 km"],["12:00","Lunch near Jonker Street","jonker","Chicken rice balls or Nyonya"],["13:30","Heritage core","heritage","Walk"],["18:00","Jonker Street night market","jonker","Dinner"],["20:30","Bus back to TBS","msentral",""],["23:00","TBS to hotel","hotel",""]],
+ 5:[["Morning","Breakfast near the hotel","hotel","Deepavali today: some shops closed"],["Then","KL Sentral and KLIA Ekspres","klia","28 min, RM55. Allow 3 hours before the flight"]]
+};
+const WARN={
+ 1:{t:"Timing check: Dewakan and the concert overlap",b:"Dewakan opens at 6 pm and the tasting menu takes about 2.5 hours, so you would leave around 8:30 pm, after the 8 pm concert start. The stadium is about 12 km south. Options: move Dewakan to another night, or eat earlier near the stadium at Pavilion Bukit Jalil."},
+ 3:{t:"Timing check: Beta and the 9 pm fountain show",b:"A 7:30 pm tasting menu at Beta usually runs past 9 pm. Beta is about 500 m from KLCC Park, so aim for the 10 pm show instead."}
+};
+// Food: days, meal, price band(1:<20,2:20-60,3:60+), tags
+const F=[
+ {n:"Restoran Chetty Nadu",day:[1],meal:"Breakfast",band:1,lat:3.2330,lon:101.6830,area:"Jalan Batu Caves (Plaza Umno)",what:"Banana leaf rice set RM7 with four vegetables; pepper chicken RM10, mutton curry RM15. Breakfast items too.",price:"RM7 to 20",hours:"Daily 7 am to 10 pm",tags:["veg"]},
+ {n:"Nam Heong Chicken Rice",day:[1],meal:"Lunch",band:1,lat:3.1448,lon:101.6968,area:"Chinatown",what:"Poached and roast chicken rice.",price:"RM15 to 25 (est.)",hours:"Lunch",tags:["bib","nopork"]},
+ {n:"Lai Foong Lala Noodles",day:[1],meal:"Lunch",band:1,lat:3.1452,lon:101.6964,area:"Chinatown",what:"Clam (lala) noodle soup.",price:"RM15 to 25 (est.)",hours:"Daytime; check before going",tags:["bib"]},
+ {n:"Sin Kiew Yee Shin Kee Beef Noodles",day:[1],meal:"Lunch",band:1,lat:3.1443,lon:101.6963,area:"Chinatown",what:"Beef noodles, dry or soup.",price:"RM15 to 25 (est.)",hours:"Daytime; check before going",tags:["bib"]},
+ {n:"Kim Lian Kee",day:[1],meal:"Lunch",band:1,lat:3.1436,lon:101.6976,area:"Petaling Street",what:"KL-style Hokkien mee in dark soy.",price:"RM8 to 12",hours:"Check before going",tags:["street","pork"]},
+ {n:"Madras Lane hawkers",day:[1],meal:"Lunch",band:1,lat:3.1425,lon:101.6972,area:"Chinatown, beside the wet market",what:"Curry laksa, chee cheong fun, yong tau foo. Most stalls close by mid-afternoon, so 1 pm is near the end.",price:"RM5 to 12",hours:"Morning to about 2 pm",tags:["street"]},
+ {n:"Kim Soya Bean",day:[1],meal:"Snack",band:1,lat:3.1440,lon:101.6980,area:"Chinatown",what:"Silky tau fu fa (soy pudding).",price:"RM3 to 4",hours:"Daytime",tags:["street","veg"]},
+ {n:"Pavilion Bukit Jalil",day:[1],meal:"Dinner",band:2,lat:3.0571,lon:101.6778,area:"Next to the stadium",what:"Mall food courts and restaurants for a quick dinner before the concert, if Dewakan moves to another night.",price:"RM20 to 50 (est.)",hours:"Mall hours",tags:[]},
+ {n:"Restoran Wong Ah Wah",day:[1,2,3],meal:"Late night",band:1,lat:3.1453,lon:101.7086,area:"Jalan Alor, Bukit Bintang",what:"Barbecued chicken wings RM3.50 each, mixed satay RM12 for 10.",price:"RM15 to 30",hours:"Daily 5:30 pm to 4 am",tags:["street"]},
+ {n:"Meng Kee Grill Fish",day:[1,2,3],meal:"Late night",band:2,lat:3.1458,lon:101.7083,area:"Jalan Alor",what:"Fried oyster omelette RM15 to 25, Penang kuey teow RM9.",price:"RM10 to 30",hours:"Daily 6 pm to 2 am",tags:["street"]},
+ {n:"Sangkaya",day:[1,2,3],meal:"Snack",band:1,lat:3.1460,lon:101.7084,area:"Jalan Alor",what:"Coconut ice cream, from RM3.90 a cone.",price:"RM4 to 13",hours:"Daily 5:30 pm to 1:30 am",tags:["veg","nopork"]},
+ {n:"Nasi Lemak Wanjo",day:[2,3,5],meal:"Breakfast",band:1,lat:3.1650,lon:101.7020,area:"Kampung Baru",what:"Nasi lemak with ayam rendang RM10.80, sambal sotong RM4.70. Go early, queues build.",price:"RM10 to 20",hours:"6 am to midnight",tags:["nopork"]},
+ {n:"Lama",day:[2],meal:"Lunch",band:2,lat:3.1985,lon:101.7175,area:"Taman Ayer Panas, Setapak",what:"Fish assam pedas, ayam kapitan, sambal udang petai, pie tee. Order several dishes to share.",price:"About US$10 to 20",hours:"Tue to Sun 11:30 to 2:30, 5:30 to 10",tags:["bib","nopork"]},
+ {n:"Jalan Ipoh Claypot Chicken Rice",day:[2],meal:"Lunch",band:1,lat:3.1760,lon:101.6900,area:"Jalan Ipoh, near the Art Gallery",what:"Claypot chicken rice with salted fish and lap cheong. Backup if Lama is full.",price:"RM15 to 25 (est.)",hours:"Check before going",tags:["bib","pork"]},
+ {n:"Kuala Selangor riverside seafood",day:[2],meal:"Dinner",band:2,lat:3.3520,lon:101.2650,area:"Pasir Penambang, near the jetties",what:"Chilli or salted-egg crab, steamed fish, butter prawns. Shared firefly tours usually include this dinner.",price:"RM40 to 80 (est.)",hours:"Evenings",tags:[]},
+ {n:"Saravanaa Bhavan",day:[3],meal:"Breakfast",band:1,lat:3.1315,lon:101.6865,area:"Jalan Tun Sambanthan, Brickfields",what:"Paper thosai rolled into a cone, idli, vada, filter coffee.",price:"RM10 to 20 (est.)",hours:"From morning",tags:["veg","nopork"]},
+ {n:"Annalakshmi",day:[3],meal:"Breakfast",band:1,lat:3.1300,lon:101.6880,area:"Jalan Berhala, Brickfields",what:"Thosai, idli and vada.",price:"RM10 to 20 (est.)",hours:"Check before going",tags:["veg","nopork"]},
+ {n:"Brickfields roti canai stall",day:[3],meal:"Breakfast",band:1,lat:3.1308,lon:101.6870,area:"Jalan Tun Sambanthan morning market",what:"Hand-stretched roti canai with dhal and fish curry, about RM1.50 a piece.",price:"Under RM10",hours:"Mornings only",tags:["street","veg"]},
+ {n:"Tea Garden, Sunway Pyramid",day:[3],meal:"Lunch",band:1,lat:3.0727,lon:101.6067,area:"Sunway Pyramid, next to the park",what:"Hainanese chicken rice balls, lou shu fun, vegetarian options.",price:"RM6 to 19",hours:"Mall hours",tags:["veg"]},
+ {n:"A'Decade, Sunway Pyramid",day:[3],meal:"Lunch",band:1,lat:3.0729,lon:101.6071,area:"Sunway Pyramid",what:"Kelantanese nasi kerabu with ayam percik, curry chee cheong fun.",price:"RM10 to 24",hours:"Mall hours",tags:["nopork"]},
+ {n:"Village Roast Duck, Sunway Pyramid",day:[3],meal:"Lunch",band:2,lat:3.0725,lon:101.6074,area:"Sunway Pyramid",what:"Roast duck, BBQ pork noodles.",price:"RM26 to 96",hours:"Mall hours",tags:["pork"]},
+ {n:"Vishal Food Catering",day:[3],meal:"Dinner",band:1,lat:3.1305,lon:101.6858,area:"Jalan Thambipillay, Brickfields",what:"Banana leaf rice with curries. Close to Thean Hou; the Deepavali bazaar fills Brickfields this weekend.",price:"RM8 to 12",hours:"Check before going",tags:["veg"]},
+ {n:"Anak Baba, Brickfields",day:[3],meal:"Dinner",band:2,lat:3.1300,lon:101.6850,area:"Brickfields",what:"Peranakan food; Bib Gourmand. Backup if you skip Beta.",price:"RM30 to 60 (est.)",hours:"Check before going",tags:["bib"]},
+ {n:"Congkak",day:[3],meal:"Dinner",band:2,lat:3.1478,lon:101.7120,area:"Bukit Bintang",what:"Bib Gourmand Malaysian, walkable from the hotel.",price:"RM20 to 40 (est.)",hours:"Check before going",tags:["bib"]},
+ {n:"Wong Mei Kee",day:[3],meal:"Dinner",band:1,lat:3.1395,lon:101.7155,area:"Pudu",what:"Roast pork (siew yoke); sells out early.",price:"RM20 to 40 (est.)",hours:"Check before going",tags:["bib","pork"]},
+ {n:"Heun Kee Claypot Chicken Rice",day:[3],meal:"Dinner",band:1,lat:3.1385,lon:101.7140,area:"Pudu",what:"Claypot chicken rice.",price:"RM20 to 40 (est.)",hours:"Check before going",tags:["bib"]},
+ {n:"Kak Som Nasi Kerabu",day:[3],meal:"Late night",band:1,lat:3.1640,lon:101.7030,area:"Kampung Baru, across Saloma Link",what:"Blue rice nasi kerabu.",price:"Under RM20",hours:"Check before going",tags:["nopork"]},
+ {n:"Mas Merah Tomyam Seafood Smoothies",day:[3],meal:"Late night",band:1,lat:3.1645,lon:101.7040,area:"Kampung Baru",what:"Fruit smoothies and tom yam seafood.",price:"Under RM20",hours:"Check before going",tags:["nopork"]},
+ {n:"Loh Yong Moh",day:[4],meal:"Breakfast",band:1,lat:2.1965,lon:102.2468,area:"32 Jalan Tukang Emas, Melaka",what:"Salted egg custard buns, otah-otah, ngoh hiong. Closes 1 pm, so go straight from the bus.",price:"RM1 to 4 per item",hours:"5:30 am to 1 pm, closed Tuesdays",tags:[]},
+ {n:"Chung Wah Chicken Rice Ball",day:[4],meal:"Lunch",band:1,lat:2.1955,lon:102.2478,area:"18 Jalan Hang Jebat",what:"Chicken rice balls with chilli sauce. Expect a queue on Saturday.",price:"About RM16 per person",hours:"Sat 8:30 am to 4 pm",tags:["nopork"]},
+ {n:"Jonker 88",day:[4],meal:"Snack",band:1,lat:2.1950,lon:102.2470,area:"88 Jalan Hang Jebat",what:"Cendol RM4 to 5, Nyonya laksa RM6 to 7.",price:"RM4 to 7",hours:"Sat 9:30 am to 8:30 pm",tags:["street"]},
+ {n:"East and West Rendezvous",day:[4],meal:"Snack",band:1,lat:2.1958,lon:102.2462,area:"52 Lorong Hang Jebat",what:"Nyonya zhang (rice dumplings) and cendol.",price:"About RM10",hours:"Daily 9:30 am to 5:30 pm",tags:[]},
+ {n:"San Shu Gong Lao Qian Ice Cafe",day:[4],meal:"Snack",band:1,lat:2.1953,lon:102.2476,area:"33 Jalan Hang Jebat",what:"Iced white coffee or teh tarik.",price:"RM5.80",hours:"Fri to Sun 9 am to 10 pm",tags:["veg"]},
+ {n:"Sun May Hiong Satay House",day:[4],meal:"Lunch",band:1,lat:2.1990,lon:102.2510,area:"Jalan Kota Laksamana",what:"Pork satay with peanut and pineapple sauce.",price:"About RM15.50",hours:"Thu to Sun 10 am to 6 pm",tags:["pork"]},
+ {n:"Jonker night market stalls",day:[4],meal:"Dinner",band:1,lat:2.1948,lon:102.2482,area:"Jalan Hang Jebat",what:"Siew mai RM5 for 5, char kway teow RM4 to 6, BBQ mutton RM16 for 5 slices, durian puffs, quail-egg balls.",price:"RM3 to 20",hours:"Fri to Sun from 6 pm",tags:["street"]},
+ {n:"Capitol Seafood",day:[4],meal:"Dinner",band:1,lat:2.1990,lon:102.2460,area:"Jalan Bunga Raya",what:"Lala clams, cuttlefish with kangkung, cockles.",price:"RM2 to 15 per plate",hours:"Daily 6 pm to 11 pm",tags:["street"]},
+ {n:"Dewakan",day:[1],meal:"Dinner",band:3,lat:3.1585,lon:101.7183,area:"Naza Tower, KLCC",what:"Two Michelin stars and a Green Star. Modern Malaysian tasting menu.",price:"RM870 nett",hours:"Mon to Sat from 6 pm",tags:["star"]},
+ {n:"Beta",day:[3],meal:"Dinner",band:3,lat:3.1555,lon:101.7125,area:"Jalan Perak",what:"One Michelin star. Tour of Malaysia tasting menu.",price:"RM630++",hours:"Closed Mondays",tags:["star"]},
+ {n:"Chim by Chef Noom",day:[1,3],meal:"Dinner",band:3,lat:3.1440,lon:101.7180,area:"Imbi, near the hotel",what:"One Michelin star, Thai tasting menus. A swap if Dewakan clashes with the concert.",price:"RM180 to 350 (est.)",hours:"Check and book",tags:["star"]}
+];
+const CHECK=["Book Dewakan (Wed 4) and Beta (Fri 6)","Book Lama for Thu lunch","Concert tickets, ID and entry details","Sunway Lagoon tickets online","Melaka buses both ways (Sat 7)","Firefly tour or return Grab plan","Hotel for 4 nights (Deepavali weekend)","Grab app and a Touch 'n Go card","Cash for Eco Park and stalls","Modest clothes for Batu Caves and temples","Swimwear and a dry bag for Sunway"];
+
+const $=s=>document.querySelector(s);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let state={day:1,view:"city",tab:"plan"};
+try{const s=JSON.parse(localStorage.getItem("kltrip-ui")||"{}");Object.assign(state,s)}catch(e){}
+const save=()=>{try{localStorage.setItem("kltrip-ui",JSON.stringify({day:state.day,view:state.view,tab:state.tab}))}catch(e){}};
+
+const VIEWS={
+ city:{lat:[3.03,3.25],lon:[101.59,101.74]},
+ region:{lat:[2.10,3.45],lon:[101.15,102.35]},
+ melaka:{lat:[2.188,2.224],lon:[102.218,102.262]}
+};
+const W=800,H=560,PAD=28;
+function proj(lat,lon,v){const b=VIEWS[v];const k=Math.cos((b.lat[0]+b.lat[1])/2*Math.PI/180);
+ const sx=(W-2*PAD)/((b.lon[1]-b.lon[0])*k), sy=(H-2*PAD)/(b.lat[1]-b.lat[0]); const s=Math.min(sx,sy);
+ const cw=(b.lon[1]-b.lon[0])*k*s, ch=(b.lat[1]-b.lat[0])*s; const ox=(W-cw)/2, oy=(H-ch)/2;
+ return [ox+(lon-b.lon[0])*k*s, oy+(b.lat[1]-lat)*s];}
+function inView(lat,lon,v){const b=VIEWS[v];return lat>=b.lat[0]&&lat<=b.lat[1]&&lon>=b.lon[0]&&lon<=b.lon[1]}
+const NS="http://www.w3.org/2000/svg";
+function el(t,a,parent){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);parent&&parent.appendChild(e);return e}
+
+function drawMap(){
+ const svg=$("#map");svg.innerHTML="";const v=state.view;
+ el("rect",{x:0,y:0,width:W,height:H,fill:css("--water")},svg);
+ // land block for region (rough: everything east of the coast line)
+ if(v==="region"){const coast=[[3.45,101.18],[3.35,101.24],[3.2,101.3],[3.0,101.38],[2.8,101.48],[2.6,101.62],[2.45,101.82],[2.3,102.0],[2.2,102.18],[2.1,102.33]];
+  const pts=coast.map(c=>proj(c[0],c[1],v));pts.push([W,H],[W,0]);
+  el("polygon",{points:pts.map(p=>p.join(",")).join(" "),fill:css("--land")},svg);
+  const t=el("text",{x:proj(2.6,101.25,v)[0],y:proj(2.6,101.25,v)[1],fill:css("--muted"),"font-size":15,"font-style":"italic","font-family":"Atkinson Hyperlegible, sans-serif"},svg);t.textContent="Strait of Malacca";
+ } else if(v==="melaka"){el("rect",{x:0,y:0,width:W,height:H,fill:css("--land")},svg);
+  const r=[[2.224,102.2468],[2.205,102.2468],[2.1955,102.2470],[2.1915,102.2455],[2.188,102.2440]].map(c=>proj(c[0],c[1],v));
+  el("polyline",{points:r.map(p=>p.join(",")).join(" "),fill:"none",stroke:css("--water"),"stroke-width":10,"stroke-linecap":"round"},svg);
+  const t=el("text",{x:r[1][0]+10,y:r[1][1],fill:css("--muted"),"font-size":13,"font-style":"italic"},svg);t.textContent="Melaka River";
+ } else {el("rect",{x:0,y:0,width:W,height:H,fill:css("--land")},svg);
+  // Klang river approximate line
+  const r=[[3.25,101.70],[3.20,101.705],[3.17,101.703],[3.160,101.7066],[3.148,101.6965],[3.135,101.685],[3.10,101.665],[3.06,101.63],[3.03,101.60]].map(c=>proj(c[0],c[1],v));
+  el("polyline",{points:r.map(p=>p.join(",")).join(" "),fill:"none",stroke:css("--water"),"stroke-width":7,"stroke-linecap":"round","stroke-linejoin":"round"},svg);
+  const t=el("text",{x:r[6][0]+8,y:r[6][1]+16,fill:css("--muted"),"font-size":13,"font-style":"italic"},svg);t.textContent="Klang River";
+ }
+ // graticule
+ const b=VIEWS[v];const step=v==="region"?0.25:(v==="melaka"?0.01:0.05);
+ for(let la=Math.ceil(b.lat[0]/step)*step;la<=b.lat[1];la+=step){const a=proj(la,b.lon[0],v),c=proj(la,b.lon[1],v);el("line",{x1:a[0],y1:a[1],x2:c[0],y2:c[1],stroke:css("--line"),"stroke-width":1,"stroke-dasharray":"2 4"},svg);const tx=el("text",{x:a[0]+3,y:a[1]-3,fill:css("--muted"),"font-size":10,"font-family":"JetBrains Mono, monospace"},svg);tx.textContent=la.toFixed(v==="melaka"?2:2)+"°N"}
+ // scale bar
+ const km=v==="region"?20:(v==="melaka"?0.5:2);const p0=proj(b.lat[0]+0.0001,b.lon[0],v);const p1=proj(b.lat[0]+0.0001,b.lon[0]+km/(111.32*Math.cos(b.lat[0]*Math.PI/180)),v);
+ const sy=H-14,sx=W-PAD-(p1[0]-p0[0]);el("line",{x1:sx,y1:sy,x2:W-PAD,y2:sy,stroke:css("--ink"),"stroke-width":3},svg);const st=el("text",{x:sx,y:sy-6,fill:css("--ink"),"font-size":11,"font-family":"JetBrains Mono, monospace"},svg);st.textContent=km+" km";
+ const days=state.day===0?DAYS:DAYS.filter(d=>d.id===state.day);
+ // routes
+ if($("#showRoute").checked){days.forEach(d=>{const ids=SCHED[d.id].map(s=>s[2]);const pts=ids.map(i=>P[i]).map(p=>proj(p.lat,p.lon,v));
+   el("polyline",{points:pts.map(p=>p.join(",")).join(" "),fill:"none",stroke:css(d.color),"stroke-width":2.5,"stroke-dasharray":"7 5","stroke-linejoin":"round",opacity:.85},svg);})}
+ // food
+ if($("#showFood").checked){F.filter(f=>f.day.some(x=>days.some(d=>d.id===x))&&inView(f.lat,f.lon,v)).forEach(f=>{const[x,y]=proj(f.lat,f.lon,v);
+   const g=el("g",{tabindex:0,role:"button","aria-label":f.n,style:"cursor:pointer"},svg);
+   el("rect",{x:x-6,y:y-6,width:12,height:12,transform:`rotate(45 ${x} ${y})`,fill:f.tags.includes("star")?css("--accent"):css("--food"),stroke:css("--surface"),"stroke-width":1.5},g);
+   g.addEventListener("click",()=>showFood(f));g.addEventListener("keydown",e=>{if(e.key==="Enter")showFood(f)});})}
+ // sights
+ if($("#showSights").checked){const seen=new Set();days.forEach(d=>{SCHED[d.id].forEach((s,i)=>{const id=s[2];const p=P[id];if(!inView(p.lat,p.lon,v))return;const[x,y]=proj(p.lat,p.lon,v);
+   const g=el("g",{tabindex:0,role:"button","aria-label":p.n,style:"cursor:pointer"},svg);
+   if(id==="hotel"){el("rect",{x:x-9,y:y-9,width:18,height:18,rx:4,fill:css("--ink"),stroke:css("--surface"),"stroke-width":2},g);const t=el("text",{x:x,y:y+4,"text-anchor":"middle",fill:css("--bg"),"font-size":11,"font-weight":700},g);t.textContent="H";}
+   else{el("circle",{cx:x,cy:y,r:10,fill:css(d.color),stroke:css("--surface"),"stroke-width":2},g);const t=el("text",{x:x,y:y+4,"text-anchor":"middle",fill:"#ffffff","font-size":10,"font-weight":700,"font-family":"JetBrains Mono, monospace"},g);t.textContent=(i+1);}
+   if(!seen.has(id)&&id!=="hotel"){const lb=el("text",{x:x+13,y:y-8,fill:css("--ink"),"font-size":12,"font-weight":700,"paint-order":"stroke",stroke:css("--land"),"stroke-width":4},g);lb.textContent=p.n.replace(/ \(.*\)/,"");}
+   seen.add(id);g.addEventListener("click",()=>showSight(id,d));g.addEventListener("keydown",e=>{if(e.key==="Enter")showSight(id,d)});});});}
+ // off-map hint
+ const off=[];days.forEach(d=>SCHED[d.id].forEach(s=>{const p=P[s[2]];if(!inView(p.lat,p.lon,v)&&!off.includes(p.n))off.push(p.n)}));
+ if(off.length){const t=el("text",{x:PAD,y:H-14,fill:css("--muted"),"font-size":11},svg);t.textContent=off.length+" stop"+(off.length>1?"s":"")+" outside this view: switch to "+(v==="city"?"Region":"KL city")}
+ // legend
+ $("#legend").innerHTML=days.map(d=>`<span><i class="sw" style="background:var(${d.color})"></i>${d.short}</span>`).join("")+`<span><i class="sq"></i>Food</span><span><i class="sq" style="background:var(--accent)"></i>Michelin star</span><span><b>H</b> Hotel</span>`;
+}
+const gm=n=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(n+", Malaysia");
+function showSight(id,d){const p=P[id];$("#info").innerHTML=`<h3>${p.n}</h3><div class="meta">${d?d.short+", "+d.theme:""}</div><p>${p.d}</p><a href="${gm(p.n.replace(/ \(.*\)/,""))}" target="_blank" rel="noopener">Open in Google Maps</a>`}
+function showFood(f){$("#info").innerHTML=`<h3>${f.n}</h3><div class="meta">${f.area} · ${f.meal} · ${f.price}</div><p>${f.what}</p><p class="meta">${f.hours}</p><a href="${gm(f.n+" "+f.area)}" target="_blank" rel="noopener">Open in Google Maps</a>`}
+
+function renderDays(){$("#days").innerHTML=`<button data-d="0" aria-pressed="${state.day===0}"><span class="dot" style="--c:var(--ink)"></span>All days</button>`+DAYS.map(d=>`<button data-d="${d.id}" aria-pressed="${state.day===d.id}"><span class="dot" style="--c:var(${d.color})"></span>${d.short}</button>`).join("");}
+function renderPlan(){const list=state.day===0?DAYS:DAYS.filter(d=>d.id===state.day);
+ $("#pane-plan").innerHTML=list.map(d=>`<h2 class="daytitle">${d.title}<br><span class="count">${d.theme}</span></h2>${WARN[d.id]?`<div class="warn"><b>${WARN[d.id].t}</b>${WARN[d.id].b}</div>`:""}<ol class="tl">${SCHED[d.id].map(s=>`<li><time>${s[0]}</time><div><button class="lnk" data-s="${s[2]}" data-day="${d.id}">${s[1]}</button>${s[3]?`<div class="s">${s[3]}</div>`:""}</div></li>`).join("")}</ol>`).join("");}
+function renderFood(){const m=$("#fMeal").value,t=$("#fType").value,p=$("#fPrice").value;
+ let r=F.filter(f=>(state.day===0||f.day.includes(state.day))&&(!m||f.meal===m)&&(!p||String(f.band)===p)&&(!t||(t==="street"?f.tags.includes("street"):t==="nopork"?!f.tags.includes("pork"):f.tags.includes(t))));
+ const order={"Breakfast":0,"Lunch":1,"Snack":2,"Dinner":3,"Late night":4};r.sort((a,b)=>a.day[0]-b.day[0]||order[a.meal]-order[b.meal]);
+ $("#fCount").textContent=r.length+" place"+(r.length===1?"":"s")+(state.day?" for "+DAYS[state.day-1].short:" across the trip");
+ const tl={star:"Michelin star",bib:"Bib Gourmand",street:"Street food",veg:"Vegetarian-friendly",pork:"Serves pork",nopork:""};
+ $("#foodList").innerHTML=r.map((f,i)=>`<article class="fi"><div class="top"><h4>${f.n}</h4><span class="price">${f.price}</span></div><div class="tags"><span class="tag">${f.day.map(x=>DAYS[x-1].short).join(", ")} · ${f.meal}</span>${f.tags.filter(x=>tl[x]).map(x=>`<span class="tag ${x}">${tl[x]}</span>`).join("")}</div><p>${f.what}</p><div class="row"><span class="count">${f.area} · ${f.hours}</span><button data-f="${F.indexOf(f)}">Show on map</button><a href="${gm(f.n+" "+f.area)}" target="_blank" rel="noopener">Google Maps</a></div></article>`).join("")||`<p class="count">Nothing matches these filters. Try "Any type".</p>`;}
+
+// Budget
+const B={hotel:[{l:"Budget, about RM200 a night (est.)",v:200},{l:"Mid-range, about RM300 a night (est.)",v:300},{l:"Upscale, about RM550 a night (est.)",v:550}],
+ airport:[{l:"KLIA Ekspres both ways (RM55 each)",v:110},{l:"Skybus both ways (RM13 each)",v:26}],
+ ks:[{l:"Shared tour with dinner (about RM95)",v:95},{l:"Grab there and back (about RM200 a car, est.)",v:"grab"}],
+ city:[{l:"Mostly rail (about RM50, est.)",v:50},{l:"Mostly Grab (about RM200, est.)",v:200}]};
+let bud={hotel:1,share:2,airport:0,ks:0,city:1,dew:true,beta:true,food:70};
+try{Object.assign(bud,JSON.parse(localStorage.getItem("kltrip-bud")||"{}"))}catch(e){}
+function renderBudget(){const sel=(k)=>`<select id="b-${k}">${B[k].map((o,i)=>`<option value="${i}" ${bud[k]==i?"selected":""}>${o.l}</option>`).join("")}</select>`;
+ $("#pane-budget").innerHTML=`<div class="bud">
+ <div class="opt"><label>Hotel, 4 nights ${sel("hotel")}</label><label>People sharing the room and cars <select id="b-share">${[1,2,3,4].map(n=>`<option ${bud.share==n?"selected":""}>${n}</option>`).join("")}</select></label></div>
+ <div class="opt"><label>Airport transfers ${sel("airport")}</label><label>Getting around KL ${sel("city")}</label></div>
+ <div class="opt"><label>Kuala Selangor ${sel("ks")}</label><span class="hint">Firefly sampan RM100 a boat (up to 4) is added and split.</span></div>
+ <div class="opt"><label><span><input type="checkbox" id="b-dew" ${bud.dew?"checked":""}> Dewakan, RM870 nett</span></label><label><span><input type="checkbox" id="b-beta" ${bud.beta?"checked":""}> Beta, RM630 plus about 16% service and tax (est.)</span></label></div>
+ <div class="opt"><label for="b-food">Other meals per day <span id="b-foodv" style="font-family:var(--mono)">RM${bud.food}</span></label><input type="range" id="b-food" min="30" max="200" step="10" value="${bud.food}"><span class="hint">RM30 is hawker food only; RM100+ adds sit-down restaurants and Bib Gourmand meals.</span></div>
+ <div><div class="count">Estimated per person, excluding flights and concert tickets</div><div class="total" id="b-total"></div></div>
+ <div class="bars" id="b-bars"></div><div class="bkey" id="b-key"></div>
+ <span class="hint">Fixed items: Sunway Lagoon RM268, Eco Park RM40, Batu Caves caves RM20, Melaka buses about RM35. All amounts checked in early October 2026 or marked est.</span></div>`;
+ calcBudget();}
+function calcBudget(){const s=+bud.share;const parts=[
+ ["Hotel",B.hotel[bud.hotel].v*4/s,"--d3"],["Transport",B.airport[bud.airport].v+(bud.city==1?200/s:50)+35+(B.ks[bud.ks].v==="grab"?200/s:B.ks[bud.ks].v),"--d2"],
+ ["Sights",268+40+20+100/s,"--d4"],["Michelin",(bud.dew?870:0)+(bud.beta?Math.round(630*1.16):0),"--accent"],["Other food",bud.food*4.5,"--food"]];
+ const tot=parts.reduce((a,p)=>a+p[1],0);$("#b-total").textContent="RM"+Math.round(tot).toLocaleString("en-MY");
+ $("#b-bars").innerHTML=parts.map(p=>`<div style="width:${p[1]/tot*100}%;background:var(${p[2]})" title="${p[0]}"></div>`).join("");
+ $("#b-key").innerHTML=parts.map(p=>`<span><i class="sw" style="background:var(${p[2]})"></i>${p[0]} RM${Math.round(p[1]).toLocaleString("en-MY")}</span>`).join("");
+ try{localStorage.setItem("kltrip-bud",JSON.stringify(bud))}catch(e){}}
+let done={};try{done=JSON.parse(localStorage.getItem("kltrip-check")||"{}")}catch(e){}
+function renderCheck(){$("#pane-check").innerHTML=`<p class="count">Ticks are saved in this browser only.</p><ul class="cl">${CHECK.map((c,i)=>`<li><label><input type="checkbox" id="c${i}" ${done[i]?"checked":""}><span class="${done[i]?"done":""}">${c}</span></label></li>`).join("")}</ul>`;}
+
+function setTab(t){state.tab=t;document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));["plan","eat","budget","check"].forEach(x=>$("#pane-"+x).hidden=x!==t);save();}
+function setDay(d){state.day=d;if(d)state.view=DAYS[d-1].view;renderDays();syncViews();renderPlan();renderFood();drawMap();save();}
+function syncViews(){document.querySelectorAll("#views button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===state.view));}
+
+$("#days").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setDay(+b.dataset.d)});
+$("#views").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;state.view=b.dataset.v;syncViews();drawMap();save()});
+["#showSights","#showFood","#showRoute"].forEach(s=>$(s).addEventListener("change",drawMap));
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setTab(b.dataset.tab)});
+["#fMeal","#fType","#fPrice"].forEach(s=>$(s).addEventListener("change",renderFood));
+$("#pane-plan").addEventListener("click",e=>{const b=e.target.closest("button.lnk");if(!b)return;const p=P[b.dataset.s];const d=DAYS[+b.dataset.day-1];
+ const v=inView(p.lat,p.lon,"melaka")?"melaka":inView(p.lat,p.lon,"city")?"city":"region";if(v!==state.view){state.view=v;syncViews();drawMap();}showSight(b.dataset.s,d);if(innerWidth<900)$(".mapcard").scrollIntoView({behavior:"smooth"})});
+$("#foodList").addEventListener("click",e=>{const b=e.target.closest("button[data-f]");if(!b)return;const f=F[+b.dataset.f];const v=inView(f.lat,f.lon,"melaka")?"melaka":inView(f.lat,f.lon,"city")?"city":"region";if(v!==state.view){state.view=v;syncViews();drawMap();}showFood(f);if(innerWidth<900)$(".mapcard").scrollIntoView({behavior:"smooth"})});
+$("#pane-budget").addEventListener("input",e=>{const id=e.target.id.replace("b-","");if(id==="dew"||id==="beta")bud[id]=e.target.checked;else bud[id]=+e.target.value;if(id==="food")$("#b-foodv").textContent="RM"+bud.food;calcBudget()});
+$("#pane-check").addEventListener("change",e=>{const i=e.target.id.slice(1);done[i]=e.target.checked;e.target.nextElementSibling.className=e.target.checked?"done":"";try{localStorage.setItem("kltrip-check",JSON.stringify(done))}catch(err){}});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawMap);
+new MutationObserver(drawMap).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+renderDays();syncViews();renderPlan();renderFood();renderBudget();renderCheck();setTab(state.tab);drawMap();
+</script>
+
+</body></html>
